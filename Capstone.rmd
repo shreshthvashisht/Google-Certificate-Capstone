@@ -1,0 +1,110 @@
+---
+title: "Google Analytics Capstone Case Study 2"
+author: "Shreshth Vashisht"
+date: "2023-06-11"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Google Capstone
+
+I used 4 datasets downloaded from the Kaggle dataset [Fitbit Fitness Tracker](https://www.kaggle.com/datasets/arashnic/fitbit) out of 18 datasets
+They are 
+* dailyActivity_merged
+* sleepDay_merged
+* dailyCalories_merged
+* dailySteps_merged
+
+These datasets were cleaned using Excel, where an additional column was added which was of correct date format
+
+
+```{r importing dataset}
+library(readr)
+daily_act <- read_csv("C:/Users/Hp/Downloads/archive (1)/Fitabase Data 4.12.16-5.12.16/dailyActivity_merged.csv", col_types = cols(ActivityDateCorrected = col_date(format = "%d-%m-%Y")))
+sleep <- read_csv("C:/Users/Hp/Downloads/archive (1)/Fitabase Data 4.12.16-5.12.16/sleepDay_merged.csv", col_types = cols(SleepDay = col_character()))
+cal <- read_csv("C:/Users/Hp/Downloads/archive (1)/Fitabase Data 4.12.16-5.12.16/dailyCalories_merged.csv", 
+col_types = cols(ActivityDayCorrected = col_date(format = "%d-%m-%Y")))
+steps <- read_csv("C:/Users/Hp/Downloads/archive (1)/Fitabase Data 4.12.16-5.12.16/dailySteps_merged.csv", col_types = cols(ActivityDayCorrected = col_date(format = "%d-%m-%Y")))
+
+```
+
+Average Steps, Distance, Calories Burnt and Sedentry Mintues were calculated from the daily_act dataset
+
+```{r calculating_average}
+d_act_avg<- daily_act %>% group_by(Id) %>% drop_na() %>% summarise(avg_total_steps=mean(TotalSteps), avg_distance=mean(TotalDistance), avg_calories_burnt=mean(Calories), avg_sedentary=mean(SedentaryMinutes))
+print(paste("average total steps per person is",mean(d_act_avg$avg_total_steps)))
+print(paste("average distance travelled per person is", mean(d_act_avg$avg_distance)))
+print(paste("average calories burnt per person is",mean(d_act_avg$avg_calories_burnt)))
+print(paste("average Sedentary Minutes per person is",mean(d_act_avg$avg_sedentary)))
+```
+Finding Relationship
+```{r correlations}
+a<-d_act_avg %>% summarise(cor(avg_total_steps,avg_calories_burnt))
+b<-d_act_avg %>% summarise(cor(avg_distance,avg_calories_burnt))
+d<-d_act_avg %>% summarise(cor(avg_calories_burnt,avg_sedentary))
+print(paste("Relationship between Steps and Calories Burnt:",a))
+ifelse(a>0.7,"High Corelation","Low Corelation")
+print(paste("Relationship between Distance and Calories Burnt:",b))
+ifelse(b>0.7,"High Corelation","Low Corelation")
+print(paste("Relationship between Sedentary Minutes and Calories Burnt:",d))
+ifelse((-0.7>d|d>0.7),"High Corelation","Low Corelation")
+```
+Now we will view the Plots
+
+```{r Plot1}
+ggplot(d_act_avg)+ geom_point(mapping = aes(x=avg_total_steps,y=avg_calories_burnt))+geom_smooth(mapping = aes(x=avg_total_steps,y=avg_calories_burnt))
+```
+
+```{r Plots2}
+ggplot(d_act_avg)+geom_point(mapping = aes(x=avg_distance,y=avg_calories_burnt)) +geom_smooth(mapping = aes(x=avg_distance,y=avg_calories_burnt))
+```
+
+```{r Plots3}
+ggplot(d_act_avg)+geom_point(mapping = aes(x=avg_distance,y=avg_total_steps)) +geom_smooth(mapping = aes(x=avg_distance,y=avg_total_steps))
+```
+```{r Plots4}
+ggplot(d_act_avg)+ geom_point(mapping = aes(x=avg_sedentary,y=avg_calories_burnt))+geom_smooth(mapping = aes(x=avg_sedentary,y=avg_calories_burnt))
+```
+Now we'll view the plots from sleep dataset
+
+```{r sleep}
+act_date_avg<- daily_act %>% group_by(ActivityDateCorrected) %>% drop_na() %>% summarise(avg_total_steps=mean(TotalSteps), avg_distance=mean(TotalDistance), avg_calories_burnt=mean(Calories), avg_sedentary=mean(SedentaryMinutes))
+```
+
+Now we will find relationship
+```{r correlations2}
+a<-act_date_avg %>% summarise(cor(avg_total_steps,avg_calories_burnt))
+b<-act_date_avg %>% summarise(cor(avg_distance,avg_calories_burnt))
+d<-act_date_avg %>% summarise(cor(avg_calories_burnt,avg_sedentary))
+print(paste("Relationship between Steps and Calories Burnt:",a))
+ifelse(a>0.7,"High Corelation","Low Corelation")
+print(paste("Relationship between Distance and Calories Burnt:",b))
+ifelse(b>0.7,"High Corelation","Low Corelation")
+print(paste("Relationship between Sedentary Minutes and Calories Burnt:",d))
+ifelse((-0.7>d|d>0.7),"High Corelation","Low Corelation")
+```
+This is an interesting observation that per user there is low correlation between distance and calories burnt and between steps and calories burnt and this needs to be further investigated
+
+
+Now we will view PLots
+
+```{r Plots5}
+ggplot(act_date_avg)+ geom_point(mapping = aes(x=avg_total_steps,y=avg_calories_burnt))+geom_smooth(mapping = aes(x=avg_total_steps,y=avg_calories_burnt))
+```
+```{r Plots6}
+ggplot(act_date_avg)+geom_point(mapping = aes(x=avg_distance,y=avg_calories_burnt)) +geom_smooth(mapping = aes(x=avg_distance,y=avg_calories_burnt))
+```
+```{r Plots7}
+ggplot(act_date_avg)+geom_point(mapping = aes(x=avg_distance,y=avg_total_steps)) +geom_smooth(mapping = aes(x=avg_distance,y=avg_total_steps))
+```
+
+
+```{r Plots8}
+ggplot(act_date_avg)+ geom_point(mapping = aes(x=avg_sedentary,y=avg_calories_burnt))+geom_smooth(mapping = aes(x=avg_sedentary,y=avg_calories_burnt))
+```
+
+We need to investigate why in per person dataset there is negative correlation between sedentary and calories burnt but positive in date wise dataset
